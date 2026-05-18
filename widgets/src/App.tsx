@@ -1,7 +1,12 @@
 import "./App.css";
+import { Button } from "@openai/apps-sdk-ui/components/Button";
 
 function App() {
-  return <h1>Hello</h1>;
+  return (
+    <Button color="primary" size="md" variant="solid">
+      Submit
+    </Button>
+  );
 }
 
 export default App;
