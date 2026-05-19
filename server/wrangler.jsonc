@@ -7,6 +7,9 @@
 	"name": "readingdeck",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-05-12",
+	"vars": {
+		"READINGDECK_API_BASE_URL": "https://readingdeck-back-prod-production.up.railway.app"
+	},
 	"observability": {
 		"enabled": true
 	},

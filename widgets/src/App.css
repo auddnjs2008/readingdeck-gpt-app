@@ -2,3 +2,357 @@
 @import "@openai/apps-sdk-ui/css";
 
 @source "../node_modules/@openai/apps-sdk-ui";
+
+:root {
+  color: #3f3631;
+  background:
+    radial-gradient(circle at top, rgba(193, 92, 61, 0.12), transparent 34%),
+    linear-gradient(180deg, #fdfbf7 0%, #f8f1ea 100%);
+  font-family:
+    "SUIT Variable", "Pretendard Variable", "Pretendard", -apple-system,
+    BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  --readingdeck-bg: #fdfbf7;
+  --readingdeck-bg-soft: #f4eee8;
+  --readingdeck-card: rgba(255, 255, 255, 0.88);
+  --readingdeck-card-strong: rgba(255, 252, 247, 0.96);
+  --readingdeck-text: #3f3631;
+  --readingdeck-muted: #8e7f74;
+  --readingdeck-border: rgba(166, 142, 125, 0.24);
+  --readingdeck-primary: #c15c3d;
+  --readingdeck-shadow: 0 20px 50px rgba(74, 52, 39, 0.08);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--readingdeck-bg);
+  color: var(--readingdeck-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font: inherit;
+}
+
+.theme-dark {
+  --readingdeck-bg: #25211e;
+  --readingdeck-bg-soft: #312b27;
+  --readingdeck-card: rgba(47, 42, 38, 0.86);
+  --readingdeck-card-strong: rgba(55, 48, 44, 0.96);
+  --readingdeck-text: #e6ddd6;
+  --readingdeck-muted: #b3a195;
+  --readingdeck-border: rgba(151, 126, 107, 0.32);
+  --readingdeck-primary: #d47558;
+  --readingdeck-shadow: 0 24px 60px rgba(8, 7, 6, 0.35);
+  background:
+    radial-gradient(circle at top, rgba(212, 117, 88, 0.16), transparent 32%),
+    linear-gradient(180deg, #25211e 0%, #1f1b19 100%);
+}
+
+.readingdeck-app {
+  min-height: 100vh;
+  padding: 24px 16px 40px;
+  color: var(--readingdeck-text);
+  background:
+    radial-gradient(circle at top, rgba(193, 92, 61, 0.08), transparent 34%),
+    linear-gradient(180deg, var(--readingdeck-bg) 0%, color-mix(in srgb, var(--readingdeck-bg) 78%, var(--readingdeck-bg-soft)) 100%);
+}
+
+.readingdeck-shell {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border: 1px solid var(--readingdeck-border);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.32), transparent 52%),
+    linear-gradient(180deg, var(--readingdeck-card-strong), var(--readingdeck-card));
+  box-shadow: var(--readingdeck-shadow);
+}
+
+.hero-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(193, 92, 61, 0.06), transparent),
+    radial-gradient(circle at 80% 20%, rgba(193, 92, 61, 0.12), transparent 26%);
+  opacity: 0.9;
+}
+
+.hero-copy,
+.hero-query {
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--readingdeck-primary);
+}
+
+.hero-copy h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: clamp(2rem, 5vw, 3.45rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.hero-body {
+  margin: 16px 0 0;
+  max-width: 54ch;
+  font-size: 0.98rem;
+  line-height: 1.72;
+  color: var(--readingdeck-muted);
+}
+
+.hero-query {
+  padding: 18px;
+  border: 1px solid var(--readingdeck-border);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--readingdeck-card) 78%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.query-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--readingdeck-primary);
+}
+
+.query-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.query-text {
+  margin: 14px 0 18px;
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+.query-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.query-stats div {
+  padding-top: 12px;
+  border-top: 1px solid var(--readingdeck-border);
+}
+
+.stat-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--readingdeck-muted);
+}
+
+.query-stats strong {
+  font-size: 0.95rem;
+}
+
+.cards-section {
+  display: grid;
+  gap: 18px;
+}
+
+.card-entry {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.card-index {
+  padding-top: 14px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--readingdeck-muted);
+}
+
+.card-surface {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid var(--readingdeck-border);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent),
+    linear-gradient(180deg, var(--readingdeck-card-strong), var(--readingdeck-card));
+  box-shadow: var(--readingdeck-shadow);
+}
+
+.card-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(193, 92, 61, 0.06), transparent 35%),
+    linear-gradient(180deg, transparent, rgba(193, 92, 61, 0.02));
+}
+
+.card-header,
+.quote-block,
+.thought-block {
+  position: relative;
+  z-index: 1;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.match-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--readingdeck-bg-soft);
+  color: var(--readingdeck-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.book-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--readingdeck-muted);
+}
+
+.meta-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--readingdeck-muted) 60%, transparent);
+}
+
+.quote-block {
+  margin: 18px 0 0;
+  padding: 0 0 0 18px;
+  border-left: 2px solid color-mix(in srgb, var(--readingdeck-primary) 38%, transparent);
+}
+
+.quote-block p {
+  margin: 0;
+  font-family: "Iowan Old Style", "Georgia", serif;
+  font-size: clamp(1.08rem, 2vw, 1.36rem);
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.thought-block {
+  margin-top: 20px;
+}
+
+.thought-label {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--readingdeck-muted);
+}
+
+.thought-text {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 0.98rem;
+  line-height: 1.8;
+}
+
+.empty-panel {
+  padding: 28px;
+  border: 1px solid var(--readingdeck-border);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, var(--readingdeck-card-strong), var(--readingdeck-card));
+  box-shadow: var(--readingdeck-shadow);
+}
+
+@media (min-width: 800px) {
+  .hero-panel {
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+    align-items: end;
+    padding: 34px;
+  }
+
+  .card-surface {
+    padding: 24px 26px;
+  }
+}
+
+@media (max-width: 639px) {
+  .readingdeck-app {
+    padding: 16px 12px 28px;
+  }
+
+  .hero-panel,
+  .card-surface,
+  .empty-panel {
+    border-radius: 22px;
+  }
+
+  .hero-panel {
+    padding: 22px 18px;
+  }
+
+  .hero-query {
+    padding: 16px;
+  }
+
+  .card-entry {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .card-index {
+    padding-left: 8px;
+    padding-top: 0;
+  }
+
+  .card-surface {
+    padding: 18px;
+  }
+}

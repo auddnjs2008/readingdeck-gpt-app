@@ -2,27 +2,28 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import z from 'zod';
 import { createMcpHandler } from 'agents/mcp';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
+import { searchCards } from './service/searchCards';
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const server = new McpServer({
-			name: 'Stocks Server',
+			name: 'ReadingDeck Server',
 			version: '1.0',
 		});
 
 		registerAppResource(
 			server,
-			'Stocks Widget',
-			'ui://stocks-ui',
+			'Reading deck',
+			'ui://readingdeck-ui',
 			{
-				description: 'UI of the stocks tool',
+				description: 'UI of Reading Deck',
 			},
 			async () => {
 				const html = await env.ASSETS.fetch(new URL('http://hello/index.html'));
 				return {
 					contents: [
 						{
-							uri: 'ui://stocks-ui',
+							uri: 'ui://readingdeck-ui',
 							text: await html.text(),
 							mimeType: RESOURCE_MIME_TYPE,
 						},
@@ -33,34 +34,49 @@ export default {
 
 		registerAppTool(
 			server,
-			'get-stock-price',
+			'get My Cards Info',
 			{
-				description: 'Get the price of a stock given a ticker symbol',
+				description: 'Get my cards related to users question',
 				inputSchema: {
-					symbol: z.string().optional(),
+					input: z.string().optional(),
 				},
 				_meta: {
 					ui: {
-						resourceUri: 'ui://stocks-ui',
+						resourceUri: 'ui://readingdeck-ui',
 					},
-					'openai/toolInvocation/invoking': 'Getting stocks...',
-					'openai/toolInvocation/invoked': 'Search complete',
+					'openai/toolInvocation/invoking': 'Searching your Reading Deck...',
+					'openai/toolInvocation/invoked': 'Cards ready',
 				},
 				annotations: {
 					openWorldHint: true,
 					readOnlyHint: true,
 				},
 			},
-			async ({ symbol }) => {
+			async ({ input }) => {
+				const data = await searchCards({
+					baseUrl: env.READINGDECK_API_BASE_URL,
+					message: input ?? '',
+				});
+
 				return {
 					content: [
 						{
 							type: 'text',
-							text: `The price of ${symbol} is 10 USD`,
+							text: [
+								`User question: ${input ?? ''}`,
+								`Found ${data.items.length} relevant cards.`,
+								...data.items.map((card, index) =>
+									[
+										`${index + 1}. [${card.type}] ${card.bookTitle} - ${card.author}`,
+										`Thought: ${card.thought}`,
+										`Quote: ${card.quote ?? 'N/A'}`,
+									].join('\n')
+								),
+							].join('\n\n'),
 						},
 					],
 					structuredContent: {
-						price: 10,
+						cards: data.items,
 					},
 				};
 			}
