@@ -8,15 +8,15 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-05-12",
 	"vars": {
-		"READINGDECK_API_BASE_URL": "https://readingdeck-back-prod-production.up.railway.app"
+		"READINGDECK_API_BASE_URL": "https://readingdeck-back-prod-production.up.railway.app",
+		// "READINGDECK_API_BASE_URL": "http://localhost:5500",
+		"PUBLIC_BASE_URL": "https://readingdeck.auddnjs2008.workers.dev"
 	},
 	"observability": {
 		"enabled": true
 	},
 	"upload_source_maps": true,
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"assets": {
 		"directory": "dist",
 		"binding": "ASSETS"

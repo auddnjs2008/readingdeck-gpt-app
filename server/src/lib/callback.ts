@@ -127,7 +127,7 @@ export default async function handleAuthCallback(request: Request, env: Env) {
 
 	const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
 		request: oauthReqInfo,
-		userId: `readingdeck-pending:${crypto.randomUUID()}`,
+		userId: `readingdeck-pending-${crypto.randomUUID()}`,
 		scope: oauthReqInfo.scope ?? [],
 		metadata: {
 			provider: 'readingdeck',
