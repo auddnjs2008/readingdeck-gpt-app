@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import z from 'zod';
 import { createMcpHandler } from 'agents/mcp';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
-import { searchCards } from './service/searchCards';
+import { SearchCardsError, searchCards } from './service/searchCards';
 import OAuthProvider, { OAuthError } from '@cloudflare/workers-oauth-provider';
 import handleAuthorizeGet from './lib/authorize';
 import handleAuthCallback from './lib/callback';
@@ -103,33 +103,88 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 				},
 			},
 			async ({ input }) => {
-				const data = await searchCards({
+				console.log('[readingdeck] tool:start', {
+					hasInput: Boolean(input?.trim()),
+					hasAccessToken: Boolean(readingdeckAccessToken),
 					baseUrl: this.env.READINGDECK_API_BASE_URL,
-					message: input ?? '',
-					accessToken: readingdeckAccessToken,
 				});
 
-				return {
-					content: [
-						{
-							type: 'text',
-							text: [
-								`User question: ${input ?? ''}`,
-								`Found ${data.items.length} relevant cards.`,
-								...data.items.map((card, index) =>
-									[
-										`${index + 1}. [${card.type}] ${card.bookTitle} - ${card.author}`,
-										`Thought: ${card.thought}`,
-										`Quote: ${card.quote ?? 'N/A'}`,
-									].join('\n')
-								),
-							].join('\n\n'),
+				try {
+					const data = await searchCards({
+						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						message: input ?? '',
+						accessToken: readingdeckAccessToken,
+					});
+
+					console.log('[readingdeck] tool:success', {
+						count: data.items.length,
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: [
+									`User question: ${input ?? ''}`,
+									`Found ${data.items.length} relevant cards.`,
+									...data.items.map((card, index) =>
+										[
+											`${index + 1}. [${card.type}] ${card.bookTitle} - ${card.author}`,
+											`Thought: ${card.thought}`,
+											`Quote: ${card.quote ?? 'N/A'}`,
+										].join('\n')
+									),
+								].join('\n\n'),
+							},
+						],
+						structuredContent: {
+							cards: data.items,
 						},
-					],
-					structuredContent: {
-						cards: data.items,
-					},
-				};
+					};
+				} catch (error) {
+					if (error instanceof SearchCardsError) {
+						console.error('[readingdeck] tool:searchCardsError', {
+							status: error.status,
+							message: error.message,
+							detail: error.detail,
+						});
+
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `ReadingDeck card search failed (${error.status}).`,
+								},
+							],
+							structuredContent: {
+								cards: [],
+								error: {
+									type: 'search_cards_error',
+									status: error.status,
+								},
+							},
+						};
+					}
+
+					console.error('[readingdeck] tool:unexpectedError', {
+						error: error instanceof Error ? error.message : String(error),
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: 'ReadingDeck tool failed unexpectedly.',
+							},
+						],
+						structuredContent: {
+							cards: [],
+							error: {
+								type: 'unexpected_error',
+							},
+						},
+					};
+				}
 			}
 		);
 
