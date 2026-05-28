@@ -84,7 +84,7 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 
 		registerAppTool(
 			server,
-			'get My Cards Info',
+			'get-cards-info',
 			{
 				description: 'Get my cards related to users question',
 				inputSchema: {
