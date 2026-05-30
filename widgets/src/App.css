@@ -39,7 +39,7 @@ button {
   font: inherit;
 }
 
-.theme-dark {
+:root.dark {
   color-scheme: dark;
   --readingdeck-bg: #25211e;
   --readingdeck-bg-soft: #3e3834;
@@ -65,7 +65,7 @@ button {
     linear-gradient(180deg, var(--readingdeck-bg) 0%, color-mix(in srgb, var(--readingdeck-bg) 78%, var(--readingdeck-bg-soft)) 100%);
 }
 
-.theme-dark.readingdeck-app {
+:root.dark .readingdeck-app {
   background:
     radial-gradient(circle at top, rgba(212, 117, 88, 0.08), transparent 26%),
     linear-gradient(180deg, var(--readingdeck-bg) 0%, color-mix(in srgb, var(--readingdeck-bg) 84%, #181614) 100%);
@@ -163,51 +163,42 @@ button {
 
 .cards-section {
   display: grid;
-  gap: 18px;
+  gap: 10px;
 }
 
 .card-entry {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
   align-items: start;
 }
 
 .card-index {
-  padding-top: 14px;
-  font-size: 0.74rem;
+  padding-top: 18px;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.22em;
-  color: var(--readingdeck-muted);
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, var(--readingdeck-muted) 86%, transparent);
 }
 
 .card-surface {
   position: relative;
   overflow: hidden;
-  padding: 22px;
-  border: 1px solid var(--readingdeck-border);
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent),
-    linear-gradient(180deg, var(--readingdeck-card-strong), var(--readingdeck-card));
-  box-shadow: var(--readingdeck-shadow);
+  padding: 20px 0 2px;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--readingdeck-border) 82%, transparent);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.theme-dark .card-surface,
-.theme-dark .empty-panel {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
-    linear-gradient(180deg, var(--readingdeck-card-strong), var(--readingdeck-card));
+:root.dark .card-surface,
+:root.dark .empty-panel {
+  background: transparent;
 }
 
 .card-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(135deg, rgba(193, 92, 61, 0.06), transparent 35%),
-    linear-gradient(180deg, transparent, rgba(193, 92, 61, 0.02));
+  content: none;
 }
 
 .card-header,
@@ -220,24 +211,24 @@ button {
 .card-header {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .card-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .match-chip {
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border-radius: 999px;
   background: var(--readingdeck-bg-soft);
   color: var(--readingdeck-muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
 }
 
@@ -245,8 +236,8 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  font-size: 0.88rem;
+  gap: 8px;
+  font-size: 0.84rem;
   color: var(--readingdeck-text-secondary);
 }
 
@@ -258,45 +249,46 @@ button {
 }
 
 .quote-block {
-  margin: 18px 0 0;
-  padding: 0 0 0 18px;
-  border-left: 2px solid color-mix(in srgb, var(--readingdeck-primary) 38%, transparent);
+  margin: 14px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 1.5px solid color-mix(in srgb, var(--readingdeck-primary) 38%, transparent);
 }
 
-.theme-dark .quote-block {
+:root.dark .quote-block {
   border-left-color: color-mix(in srgb, var(--readingdeck-primary) 54%, transparent);
 }
 
 .quote-block p {
   margin: 0;
   font-family: "Iowan Old Style", "Georgia", serif;
-  font-size: clamp(1.08rem, 2vw, 1.36rem);
-  line-height: 1.7;
+  font-size: clamp(1.02rem, 1.8vw, 1.24rem);
+  line-height: 1.78;
   font-style: italic;
 }
 
 .thought-block {
-  margin-top: 20px;
+  margin-top: 16px;
+  padding-bottom: 2px;
 }
 
 .thought-label {
   margin: 0 0 10px;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--readingdeck-muted);
 }
 
-.theme-dark .thought-text {
+:root.dark .thought-text {
   color: var(--readingdeck-text-secondary);
 }
 
 .thought-text {
   margin: 0;
   white-space: pre-line;
-  font-size: 0.98rem;
-  line-height: 1.8;
+  font-size: 0.96rem;
+  line-height: 1.75;
 }
 
 .empty-panel {
@@ -316,7 +308,7 @@ button {
   }
 
   .card-surface {
-    padding: 24px 26px;
+    padding: 22px 0 4px;
   }
 }
 
@@ -341,15 +333,15 @@ button {
 
   .card-entry {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 6px;
   }
 
   .card-index {
-    padding-left: 8px;
+    padding-left: 2px;
     padding-top: 0;
   }
 
   .card-surface {
-    padding: 18px;
+    padding: 14px 0 0;
   }
 }
