@@ -67,6 +67,16 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			WIDGET_URI,
 			{
 				description: 'UI of Reading Deck',
+				_meta: {
+					'openai/widgetDescription':
+						'Shows ReadingDeck card search results and matching reading cards.',
+					'openai/widgetPrefersBorder': true,
+					'openai/widgetCSP': {
+						connect_domains: [],
+						resource_domains: [publicBaseUrl],
+					},
+					'openai/widgetDomain': publicBaseUrl,
+				},
 			},
 			async () => {
 				const html = await this.env.ASSETS.fetch(new URL('http://hello/index.html'));
