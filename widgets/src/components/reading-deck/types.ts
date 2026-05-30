@@ -9,11 +9,18 @@ export type CardItem = {
   author: string;
   pageStart: number | null;
   pageEnd: number | null;
-  distance: number;
+  distance: number | null;
+  createdAt?: string;
 };
 
 export type ToolOutput = {
   cards: CardItem[];
+  queryLabel?: string;
+  sourceLabel?: string;
+  error?: {
+    type: string;
+    status?: number;
+  };
 };
 
 export type OpenAIHost = {

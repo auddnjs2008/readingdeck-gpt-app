@@ -72,9 +72,8 @@ button {
 .hero-panel {
   position: relative;
   overflow: hidden;
-  display: grid;
-  gap: 20px;
-  padding: 28px;
+  display: block;
+  padding: 20px;
   border: 1px solid var(--readingdeck-border);
   border-radius: 28px;
   background:
@@ -94,36 +93,9 @@ button {
   opacity: 0.9;
 }
 
-.hero-copy,
 .hero-query {
   position: relative;
   z-index: 1;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--readingdeck-primary);
-}
-
-.hero-copy h1 {
-  margin: 0;
-  max-width: 12ch;
-  font-family: "Iowan Old Style", "Georgia", serif;
-  font-size: clamp(2rem, 5vw, 3.45rem);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-}
-
-.hero-body {
-  margin: 16px 0 0;
-  max-width: 54ch;
-  font-size: 0.98rem;
-  line-height: 1.72;
-  color: var(--readingdeck-muted);
 }
 
 .hero-query {

@@ -38,7 +38,8 @@ export function isCardItem(value: unknown): value is CardItem {
     typeof card.author === "string" &&
     (typeof card.pageStart === "number" || card.pageStart === null) &&
     (typeof card.pageEnd === "number" || card.pageEnd === null) &&
-    typeof card.distance === "number"
+    (typeof card.distance === "number" || card.distance === null) &&
+    (typeof card.createdAt === "string" || card.createdAt === undefined)
   );
 }
 
@@ -53,7 +54,11 @@ export function isToolOutput(value: unknown): value is ToolOutput {
     return false;
   }
 
-  return candidate.cards.every(isCardItem);
+  return (
+    candidate.cards.every(isCardItem) &&
+    (typeof candidate.queryLabel === "string" || candidate.queryLabel === undefined) &&
+    (typeof candidate.sourceLabel === "string" || candidate.sourceLabel === undefined)
+  );
 }
 
 export function formatPageRange(card: CardItem) {

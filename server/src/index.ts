@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import z from 'zod';
 import { createMcpHandler } from 'agents/mcp';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
+import { GetRecentCardsError, getRecentCards } from './service/getRecentCards';
 import { SearchCardsError, searchCards } from './service/searchCards';
 import OAuthProvider, { OAuthError } from '@cloudflare/workers-oauth-provider';
 import handleAuthorizeGet from './lib/authorize';
@@ -172,15 +173,17 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						return {
 							content: [
 								{
-									type: 'text',
-									text: `ReadingDeck card search failed (${error.status}).`,
-								},
-							],
-							structuredContent: {
-								cards: [],
-								error: {
-									type: 'search_cards_error',
-									status: error.status,
+								type: 'text',
+								text: `ReadingDeck card search failed (${error.status}).`,
+							},
+						],
+						structuredContent: {
+							cards: [],
+							queryLabel: input?.trim() || 'Current question',
+							sourceLabel: 'Live tool output',
+							error: {
+								type: 'search_cards_error',
+								status: error.status,
 								},
 							},
 						};
@@ -199,6 +202,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						],
 						structuredContent: {
 							cards: [],
+							queryLabel: input?.trim() || 'Current question',
+							sourceLabel: 'Live tool output',
 							error: {
 								type: 'unexpected_error',
 							},
@@ -206,6 +211,117 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					};
 				}
 			}
+		);
+
+		registerAppTool(
+			server,
+			'get-recent-cards',
+			{
+				description: 'Get my most recently created cards.',
+				inputSchema: {
+					limit: z.number().int().min(1).max(20).optional(),
+				},
+				_meta: {
+					ui: {
+						resourceUri: WIDGET_URI,
+					},
+					'openai/toolInvocation/invoking': 'Loading your recent cards...',
+					'openai/toolInvocation/invoked': 'Recent cards ready',
+				},
+				annotations: {
+					openWorldHint: true,
+					readOnlyHint: true,
+				},
+			},
+			async ({ limit }) => {
+				console.log('[readingdeck] recent-tool:start', {
+					limit: limit ?? 10,
+					hasAccessToken: Boolean(readingdeckAccessToken),
+					baseUrl: this.env.READINGDECK_API_BASE_URL,
+				});
+
+				try {
+					const data = await getRecentCards({
+						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						limit: limit ?? 10,
+						accessToken: readingdeckAccessToken,
+					});
+
+					console.log('[readingdeck] recent-tool:success', {
+						count: data.items.length,
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: [
+									`Fetched ${data.items.length} recent cards.`,
+									...data.items.map((card, index) =>
+										[
+											`${index + 1}. [${card.type}] ${card.bookTitle} - ${card.author}`,
+											`Thought: ${card.thought}`,
+											`Quote: ${card.quote ?? 'N/A'}`,
+										].join('\n')
+									),
+								].join('\n\n'),
+							},
+						],
+						structuredContent: {
+							cards: data.items,
+							queryLabel: 'Recent cards',
+							sourceLabel: 'Live tool output',
+						},
+					};
+				} catch (error) {
+					if (error instanceof GetRecentCardsError) {
+						console.error('[readingdeck] recent-tool:getRecentCardsError', {
+							status: error.status,
+							message: error.message,
+							detail: error.detail,
+						});
+
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `ReadingDeck recent cards lookup failed (${error.status}).`,
+								},
+							],
+							structuredContent: {
+								cards: [],
+								queryLabel: 'Recent cards',
+								sourceLabel: 'Live tool output',
+								error: {
+									type: 'get_recent_cards_error',
+									status: error.status,
+								},
+							},
+						};
+					}
+
+					console.error('[readingdeck] recent-tool:unexpectedError', {
+						error: error instanceof Error ? error.message : String(error),
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: 'ReadingDeck recent cards tool failed unexpectedly.',
+							},
+						],
+						structuredContent: {
+							cards: [],
+							queryLabel: 'Recent cards',
+							sourceLabel: 'Live tool output',
+							error: {
+								type: 'unexpected_error',
+							},
+						},
+					};
+				}
+			},
 		);
 
 		const handler = createMcpHandler(server);

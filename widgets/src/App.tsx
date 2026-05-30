@@ -49,8 +49,11 @@ function App() {
 
   useHostStyles(app, app?.getHostContext() ?? null);
 
-  const queryLabel = query.trim() || "No query provided";
-  const sourceLabel = hasLiveToolOutput ? "Live tool output" : "Local preview";
+  const queryLabel =
+    toolOutput.queryLabel ?? (query.trim() || "No query provided");
+  const sourceLabel =
+    toolOutput.sourceLabel ??
+    (hasLiveToolOutput ? "Live tool output" : "Local preview");
 
   return (
     <main className={`readingdeck-app theme-${theme}`}>

@@ -22,9 +22,11 @@ export function ReadingDeckCardList({ cards }: ReadingDeckCardListProps) {
                   <Badge color={meta.color} variant="soft" pill>
                     {meta.label}
                   </Badge>
-                  <span className="match-chip">
-                    {formatMatchScore(card.distance)}
-                  </span>
+                  {card.distance != null ? (
+                    <span className="match-chip">
+                      {formatMatchScore(card.distance)}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="book-meta">
                   <span>{card.bookTitle}</span>
