@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { fallbackData } from "./data";
 import type { ToolOutput } from "./types";
 import { isToolOutput } from "./utils";
 
+const EMPTY_OUTPUT: ToolOutput = {
+  cards: [],
+};
+
 function readToolOutput(): ToolOutput {
   const hostOutput = window.openai?.toolOutput;
-  return isToolOutput(hostOutput) ? hostOutput : fallbackData;
+  return isToolOutput(hostOutput) ? hostOutput : EMPTY_OUTPUT;
 }
 
 export function useReadingDeckData() {

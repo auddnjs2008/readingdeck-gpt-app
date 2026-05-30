@@ -5,14 +5,17 @@ import {
   ReadingDeckEmptyState,
   ReadingDeckHero,
 } from "./components/reading-deck";
-import { fallbackData, previewQuery } from "./components/reading-deck/data";
 import type { ToolOutput } from "./components/reading-deck/types";
 import { isToolOutput } from "./components/reading-deck/utils";
 import { useApp, useHostStyles } from "@modelcontextprotocol/ext-apps/react";
 
+const EMPTY_OUTPUT: ToolOutput = {
+  cards: [],
+};
+
 function App() {
-  const [toolOutput, setToolOutput] = useState<ToolOutput>(fallbackData);
-  const [query, setQuery] = useState(previewQuery);
+  const [toolOutput, setToolOutput] = useState<ToolOutput>(EMPTY_OUTPUT);
+  const [query, setQuery] = useState("");
   const [hasLiveToolOutput, setHasLiveToolOutput] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
