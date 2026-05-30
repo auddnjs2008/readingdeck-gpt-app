@@ -1,4 +1,4 @@
-export const SEARCH_CARDS_ENDPOINT = '/ai/card-search';
+export const SEARCH_CARDS_ENDPOINT = '/card-embeddings/search/cards';
 
 export type SearchCardsRequest = {
 	baseUrl: string;
