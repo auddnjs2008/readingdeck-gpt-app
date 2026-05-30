@@ -4,6 +4,7 @@
 @source "../node_modules/@openai/apps-sdk-ui";
 
 :root {
+  color-scheme: light;
   color: #3f3631;
   background:
     radial-gradient(circle at top, rgba(193, 92, 61, 0.12), transparent 34%),
@@ -16,6 +17,7 @@
   --readingdeck-card: rgba(255, 255, 255, 0.88);
   --readingdeck-card-strong: rgba(255, 252, 247, 0.96);
   --readingdeck-text: #3f3631;
+  --readingdeck-text-secondary: #75675e;
   --readingdeck-muted: #8e7f74;
   --readingdeck-border: rgba(166, 142, 125, 0.24);
   --readingdeck-primary: #c15c3d;
@@ -38,18 +40,20 @@ button {
 }
 
 .theme-dark {
+  color-scheme: dark;
   --readingdeck-bg: #25211e;
-  --readingdeck-bg-soft: #312b27;
-  --readingdeck-card: rgba(47, 42, 38, 0.86);
-  --readingdeck-card-strong: rgba(55, 48, 44, 0.96);
+  --readingdeck-bg-soft: #3e3834;
+  --readingdeck-card: rgba(47, 42, 38, 0.92);
+  --readingdeck-card-strong: rgba(62, 56, 52, 0.98);
   --readingdeck-text: #e6ddd6;
-  --readingdeck-muted: #b3a195;
-  --readingdeck-border: rgba(151, 126, 107, 0.32);
+  --readingdeck-text-secondary: #9b8b81;
+  --readingdeck-muted: #7b6d63;
+  --readingdeck-border: rgba(74, 66, 61, 0.95);
   --readingdeck-primary: #d47558;
-  --readingdeck-shadow: 0 24px 60px rgba(8, 7, 6, 0.35);
+  --readingdeck-shadow: 0 24px 60px rgba(8, 7, 6, 0.44);
   background:
-    radial-gradient(circle at top, rgba(212, 117, 88, 0.16), transparent 32%),
-    linear-gradient(180deg, #25211e 0%, #1f1b19 100%);
+    radial-gradient(circle at top, rgba(212, 117, 88, 0.12), transparent 28%),
+    linear-gradient(180deg, #25211e 0%, #1d1a18 100%);
 }
 
 .readingdeck-app {
@@ -59,6 +63,12 @@ button {
   background:
     radial-gradient(circle at top, rgba(193, 92, 61, 0.08), transparent 34%),
     linear-gradient(180deg, var(--readingdeck-bg) 0%, color-mix(in srgb, var(--readingdeck-bg) 78%, var(--readingdeck-bg-soft)) 100%);
+}
+
+.theme-dark.readingdeck-app {
+  background:
+    radial-gradient(circle at top, rgba(212, 117, 88, 0.08), transparent 26%),
+    linear-gradient(180deg, var(--readingdeck-bg) 0%, color-mix(in srgb, var(--readingdeck-bg) 84%, #181614) 100%);
 }
 
 .readingdeck-shell {
@@ -183,6 +193,13 @@ button {
   box-shadow: var(--readingdeck-shadow);
 }
 
+.theme-dark .card-surface,
+.theme-dark .empty-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
+    linear-gradient(180deg, var(--readingdeck-card-strong), var(--readingdeck-card));
+}
+
 .card-surface::before {
   content: "";
   position: absolute;
@@ -230,7 +247,7 @@ button {
   align-items: center;
   gap: 10px;
   font-size: 0.88rem;
-  color: var(--readingdeck-muted);
+  color: var(--readingdeck-text-secondary);
 }
 
 .meta-divider {
@@ -244,6 +261,10 @@ button {
   margin: 18px 0 0;
   padding: 0 0 0 18px;
   border-left: 2px solid color-mix(in srgb, var(--readingdeck-primary) 38%, transparent);
+}
+
+.theme-dark .quote-block {
+  border-left-color: color-mix(in srgb, var(--readingdeck-primary) 54%, transparent);
 }
 
 .quote-block p {
@@ -265,6 +286,10 @@ button {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--readingdeck-muted);
+}
+
+.theme-dark .thought-text {
+  color: var(--readingdeck-text-secondary);
 }
 
 .thought-text {

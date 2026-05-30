@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import {
   ReadingDeckCardList,
   ReadingDeckEmptyState,
-  ReadingDeckHero,
 } from "./components/reading-deck";
 import type { ToolOutput } from "./components/reading-deck/types";
 import { isToolOutput } from "./components/reading-deck/utils";
@@ -18,13 +17,32 @@ function readToolOutput(): ToolOutput {
   return isToolOutput(hostOutput) ? hostOutput : EMPTY_OUTPUT;
 }
 
+function readTheme(): "light" | "dark" {
+  const hostTheme = window.openai?.theme;
+  return hostTheme === "dark" ? "dark" : "light";
+}
+
 function App() {
   const [toolOutput, setToolOutput] = useState<ToolOutput>(() => readToolOutput());
-  const [query, setQuery] = useState("");
-  const [hasLiveToolOutput, setHasLiveToolOutput] = useState(
-    () => isToolOutput(window.openai?.toolOutput),
-  );
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => readTheme());
+
+  useEffect(() => {
+    const syncTheme = () => {
+      setTheme(readTheme());
+    };
+
+    syncTheme();
+
+    const pollingId = window.setInterval(syncTheme, 400);
+    const timeoutId = window.setTimeout(() => {
+      window.clearInterval(pollingId);
+    }, 4000);
+
+    return () => {
+      window.clearInterval(pollingId);
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   const { app } = useApp({
     appInfo: { name: "ReadingDeck Client", version: "1.0" },
@@ -33,29 +51,28 @@ function App() {
       const initialContext = app.getHostContext();
       if (initialContext?.theme === "dark" || initialContext?.theme === "light") {
         setTheme(initialContext.theme);
+      } else {
+        setTheme(readTheme());
       }
 
       const initialOutput = readToolOutput();
       setToolOutput(initialOutput);
-      setHasLiveToolOutput(isToolOutput(window.openai?.toolOutput));
 
       app.onhostcontextchanged = (ctx) => {
         if (ctx.theme === "dark" || ctx.theme === "light") {
           setTheme(ctx.theme);
+        } else {
+          setTheme(readTheme());
         }
       };
 
       app.ontoolinput = (params) => {
-        const input = params.arguments?.input;
-        if (typeof input === "string" && input.trim()) {
-          setQuery(input.trim());
-        }
+        void params;
       };
 
       app.ontoolresult = (result) => {
         if (isToolOutput(result.structuredContent)) {
           setToolOutput(result.structuredContent);
-          setHasLiveToolOutput(true);
         }
       };
     },
@@ -63,21 +80,9 @@ function App() {
 
   useHostStyles(app, app?.getHostContext() ?? null);
 
-  const queryLabel =
-    toolOutput.queryLabel ?? (query.trim() || "No query provided");
-  const sourceLabel =
-    toolOutput.sourceLabel ??
-    (hasLiveToolOutput ? "Live tool output" : "Local preview");
-
   return (
     <main className={`readingdeck-app theme-${theme}`}>
       <div className="readingdeck-shell">
-        <ReadingDeckHero
-          count={toolOutput.cards.length}
-          query={queryLabel}
-          sourceLabel={sourceLabel}
-        />
-
         {toolOutput.cards.length === 0 ? (
           <ReadingDeckEmptyState />
         ) : (
