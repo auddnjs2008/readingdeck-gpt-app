@@ -13,10 +13,17 @@ const EMPTY_OUTPUT: ToolOutput = {
   cards: [],
 };
 
+function readToolOutput(): ToolOutput {
+  const hostOutput = window.openai?.toolOutput;
+  return isToolOutput(hostOutput) ? hostOutput : EMPTY_OUTPUT;
+}
+
 function App() {
-  const [toolOutput, setToolOutput] = useState<ToolOutput>(EMPTY_OUTPUT);
+  const [toolOutput, setToolOutput] = useState<ToolOutput>(() => readToolOutput());
   const [query, setQuery] = useState("");
-  const [hasLiveToolOutput, setHasLiveToolOutput] = useState(false);
+  const [hasLiveToolOutput, setHasLiveToolOutput] = useState(
+    () => isToolOutput(window.openai?.toolOutput),
+  );
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   const { app } = useApp({
@@ -27,6 +34,10 @@ function App() {
       if (initialContext?.theme === "dark" || initialContext?.theme === "light") {
         setTheme(initialContext.theme);
       }
+
+      const initialOutput = readToolOutput();
+      setToolOutput(initialOutput);
+      setHasLiveToolOutput(isToolOutput(window.openai?.toolOutput));
 
       app.onhostcontextchanged = (ctx) => {
         if (ctx.theme === "dark" || ctx.theme === "light") {
