@@ -291,6 +291,52 @@ button {
   line-height: 1.75;
 }
 
+.book-surface {
+  padding-top: 16px;
+}
+
+.book-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.book-list-main {
+  min-width: 0;
+}
+
+.book-list-title {
+  margin: 0;
+  font-size: 1.04rem;
+  line-height: 1.45;
+  color: var(--readingdeck-text);
+}
+
+.book-list-author {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: var(--readingdeck-text-secondary);
+}
+
+.book-list-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.book-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--readingdeck-bg-soft);
+  color: var(--readingdeck-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
 .empty-panel {
   padding: 28px;
   border: 1px solid var(--readingdeck-border);
@@ -358,5 +404,13 @@ button {
 
   .card-surface {
     padding: 14px 0 0;
+  }
+
+  .book-list-header {
+    flex-direction: column;
+  }
+
+  .book-list-stats {
+    justify-content: flex-start;
   }
 }

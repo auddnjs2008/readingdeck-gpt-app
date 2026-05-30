@@ -13,8 +13,19 @@ export type CardItem = {
   createdAt?: string;
 };
 
+export type BookItem = {
+  bookId: number;
+  title: string;
+  author: string;
+  cardCount?: number;
+  progressPercent?: number;
+  backgroundImage?: string | null;
+  status?: "reading" | "finished" | "paused";
+};
+
 export type ToolOutput = {
-  cards: CardItem[];
+  cards?: CardItem[];
+  books?: BookItem[];
   queryLabel?: string;
   sourceLabel?: string;
   error?: {

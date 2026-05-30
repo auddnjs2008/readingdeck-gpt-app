@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import {
+  ReadingDeckBookList,
   ReadingDeckCardList,
   ReadingDeckEmptyState,
+  ReadingDeckErrorState,
 } from "./components/reading-deck";
-import type { ToolOutput } from "./components/reading-deck/types";
+import type { BookItem, CardItem } from "./components/reading-deck/types";
 import { isToolOutput } from "./components/reading-deck/utils";
 import {
   applyDocumentTheme,
@@ -13,13 +15,44 @@ import {
 } from "@modelcontextprotocol/ext-apps/react";
 import { LoadingIndicator } from "@openai/apps-sdk-ui/components/Indicator";
 
+type View = "loading" | "cards" | "books" | "empty" | "error";
+
 function App() {
-  const [toolOutput, setToolOutput] = useState<ToolOutput | null>(null);
+  const [view, setView] = useState<View>("loading");
+  const [cards, setCards] = useState<CardItem[]>([]);
+  const [books, setBooks] = useState<BookItem[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleToolResult = useCallback(
     ({ structuredContent }: { structuredContent?: unknown }) => {
       if (isToolOutput(structuredContent)) {
-        setToolOutput(structuredContent);
+        if (structuredContent.error) {
+          setCards([]);
+          setBooks([]);
+          setErrorMessage(
+            structuredContent.error.status
+              ? `요청을 처리하지 못했습니다. (status: ${structuredContent.error.status})`
+              : "요청을 처리하지 못했습니다.",
+          );
+          setView("error");
+          return;
+        }
+
+        if (Array.isArray(structuredContent.books)) {
+          setBooks(structuredContent.books);
+          setCards([]);
+          setErrorMessage(null);
+          setView(structuredContent.books.length > 0 ? "books" : "empty");
+          return;
+        }
+
+        if (Array.isArray(structuredContent.cards)) {
+          setCards(structuredContent.cards);
+          setBooks([]);
+          setErrorMessage(null);
+          setView(structuredContent.cards.length > 0 ? "cards" : "empty");
+          return;
+        }
       }
     },
     [],
@@ -74,7 +107,7 @@ function App() {
     };
   }, [app]);
 
-  if (toolOutput === null) {
+  if (view === "loading") {
     return (
       <main className="readingdeck-app">
         <div className="readingdeck-shell">
@@ -87,13 +120,25 @@ function App() {
     );
   }
 
+  if (view === "error") {
+    return (
+      <main className="readingdeck-app">
+        <div className="readingdeck-shell">
+          <ReadingDeckErrorState message={errorMessage ?? undefined} />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="readingdeck-app">
       <div className="readingdeck-shell">
-        {toolOutput.cards.length === 0 ? (
-          <ReadingDeckEmptyState />
+        {view === "books" ? (
+          <ReadingDeckBookList books={books} />
+        ) : view === "cards" ? (
+          <ReadingDeckCardList cards={cards} />
         ) : (
-          <ReadingDeckCardList cards={toolOutput.cards} />
+          <ReadingDeckEmptyState />
         )}
       </div>
     </main>

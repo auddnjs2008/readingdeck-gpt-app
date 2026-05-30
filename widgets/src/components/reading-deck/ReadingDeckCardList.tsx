@@ -1,9 +1,9 @@
 import { Badge } from "@openai/apps-sdk-ui/components/Badge";
-import type { ToolOutput } from "./types";
+import type { CardItem } from "./types";
 import { cardTypeMeta, formatMatchScore, formatPageRange } from "./utils";
 
 type ReadingDeckCardListProps = {
-  cards: ToolOutput["cards"];
+  cards: CardItem[];
 };
 
 export function ReadingDeckCardList({ cards }: ReadingDeckCardListProps) {
