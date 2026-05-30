@@ -11,9 +11,10 @@ import {
   applyHostStyleVariables,
   useApp,
 } from "@modelcontextprotocol/ext-apps/react";
+import { LoadingIndicator } from "@openai/apps-sdk-ui/components/Indicator";
 
 function App() {
-  const [toolOutput, setToolOutput] = useState<ToolOutput>({ cards: [] });
+  const [toolOutput, setToolOutput] = useState<ToolOutput | null>(null);
 
   const handleToolResult = useCallback(
     ({ structuredContent }: { structuredContent?: unknown }) => {
@@ -34,13 +35,31 @@ function App() {
 
       app.ontoolresult = handleToolResult;
 
-      //eslint-disable-next-line
-      if ((window as any).openai.toolOutput) {
+      const syncInitialToolOutput = () => {
+        //eslint-disable-next-line
+        const hostOutput = (window as any).openai?.toolOutput;
+        if (!hostOutput) return false;
+
         handleToolResult({
-          //eslint-disable-next-line
-          structuredContent: (window as any).openai.toolOutput,
+          structuredContent: hostOutput,
         });
+        return true;
+      };
+
+      //eslint-disable-next-line
+      if (syncInitialToolOutput()) {
+        return;
       }
+
+      const pollingId = window.setInterval(() => {
+        if (syncInitialToolOutput()) {
+          window.clearInterval(pollingId);
+        }
+      }, 250);
+
+      window.setTimeout(() => {
+        window.clearInterval(pollingId);
+      }, 4000);
     },
   });
 
@@ -54,6 +73,19 @@ function App() {
       applyHostStyleVariables(ctx.styles.variables);
     };
   }, [app]);
+
+  if (toolOutput === null) {
+    return (
+      <main className="readingdeck-app">
+        <div className="readingdeck-shell">
+          <div className="readingdeck-loading">
+            <LoadingIndicator size={24} />
+            <p>ReadingDeck에서 카드를 불러오는 중입니다.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="readingdeck-app">
