@@ -62,6 +62,14 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 
 		const authProps = (this.ctx.props ?? {}) as ReadingDeckAuthProps;
 		const readingdeckAccessToken = authProps.readingdeckAccessToken;
+		const widgetResourceDomains = [
+			publicBaseUrl,
+			'https://readingdeck.s3.ap-northeast-2.amazonaws.com',
+			'https://d30f9djudvl18y.cloudfront.net',
+			'https://lh3.googleusercontent.com',
+			'https://search1.kakaocdn.net',
+			'https://images.unsplash.com',
+		];
 
 		registerAppResource(
 			server,
@@ -75,7 +83,7 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					'openai/widgetPrefersBorder': true,
 					'openai/widgetCSP': {
 						connect_domains: [],
-						resource_domains: [publicBaseUrl],
+						resource_domains: widgetResourceDomains,
 					},
 					'openai/widgetDomain': publicBaseUrl,
 				},
@@ -94,7 +102,7 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 								'openai/widgetPrefersBorder': true,
 								'openai/widgetCSP': {
 									connect_domains: [],
-									resource_domains: [publicBaseUrl],
+									resource_domains: widgetResourceDomains,
 								},
 								'openai/widgetDomain': publicBaseUrl,
 							},
