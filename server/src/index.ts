@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import z from 'zod';
 import { createMcpHandler } from 'agents/mcp';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
+import { GetReadBooksError, getReadBooks } from './service/getReadBooks';
 import { GetRecentCardsError, getRecentCards } from './service/getRecentCards';
 import { SearchCardsError, searchCards } from './service/searchCards';
 import OAuthProvider, { OAuthError } from '@cloudflare/workers-oauth-provider';
@@ -314,6 +315,114 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						structuredContent: {
 							cards: [],
 							queryLabel: 'Recent cards',
+							sourceLabel: 'Live tool output',
+							error: {
+								type: 'unexpected_error',
+							},
+						},
+					};
+				}
+			},
+		);
+
+		registerAppTool(
+			server,
+			'get-read-books',
+			{
+				description: 'Get books in my ReadingDeck library.',
+				inputSchema: {
+					limit: z.number().int().min(1).max(20).optional(),
+				},
+				_meta: {
+					ui: {
+						resourceUri: WIDGET_URI,
+					},
+					'openai/toolInvocation/invoking': 'Loading your books...',
+					'openai/toolInvocation/invoked': 'Books ready',
+				},
+				annotations: {
+					openWorldHint: true,
+					readOnlyHint: true,
+				},
+			},
+			async ({ limit }) => {
+				console.log('[readingdeck] books-tool:start', {
+					limit: limit ?? 10,
+					hasAccessToken: Boolean(readingdeckAccessToken),
+					baseUrl: this.env.READINGDECK_API_BASE_URL,
+				});
+
+				try {
+					const data = await getReadBooks({
+						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						limit: limit ?? 10,
+						accessToken: readingdeckAccessToken,
+					});
+
+					console.log('[readingdeck] books-tool:success', {
+						count: data.items.length,
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: [
+									`Fetched ${data.items.length} books from your ReadingDeck library.`,
+									...data.items.map(
+										(book, index) =>
+											`${index + 1}. ${book.title} - ${book.author}${typeof book.cardCount === 'number' ? ` (${book.cardCount} cards)` : ''}`
+									),
+								].join('\n'),
+							},
+						],
+						structuredContent: {
+							books: data.items,
+							queryLabel: 'My books',
+							sourceLabel: 'Live tool output',
+						},
+					};
+				} catch (error) {
+					if (error instanceof GetReadBooksError) {
+						console.error('[readingdeck] books-tool:getReadBooksError', {
+							status: error.status,
+							message: error.message,
+							detail: error.detail,
+						});
+
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `ReadingDeck books lookup failed (${error.status}).`,
+								},
+							],
+							structuredContent: {
+								books: [],
+								queryLabel: 'My books',
+								sourceLabel: 'Live tool output',
+								error: {
+									type: 'get_read_books_error',
+									status: error.status,
+								},
+							},
+						};
+					}
+
+					console.error('[readingdeck] books-tool:unexpectedError', {
+						error: error instanceof Error ? error.message : String(error),
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: 'ReadingDeck books tool failed unexpectedly.',
+							},
+						],
+						structuredContent: {
+							books: [],
+							queryLabel: 'My books',
 							sourceLabel: 'Live tool output',
 							error: {
 								type: 'unexpected_error',
