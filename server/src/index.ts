@@ -86,6 +86,16 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 							uri: WIDGET_URI,
 							text: await html.text(),
 							mimeType: RESOURCE_MIME_TYPE,
+							_meta: {
+								'openai/widgetDescription':
+									'Shows ReadingDeck card search results and matching reading cards.',
+								'openai/widgetPrefersBorder': true,
+								'openai/widgetCSP': {
+									connect_domains: [],
+									resource_domains: [publicBaseUrl],
+								},
+								'openai/widgetDomain': publicBaseUrl,
+							},
 						},
 					],
 				};
