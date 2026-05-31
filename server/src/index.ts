@@ -118,7 +118,7 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 
 		registerAppTool(
 			server,
-			'get-cards-info',
+			'search-cards',
 			{
 				description:
 					'Use when the user asks for cards related to a question, topic, emotion, or idea across their ReadingDeck library.',
@@ -696,6 +696,11 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					'openai/toolInvocation/invoking': 'Creating your book...',
 					'openai/toolInvocation/invoked': 'Book created',
 				},
+				annotations: {
+					openWorldHint: true,
+					readOnlyHint: false,
+					destructiveHint: false,
+				},
 			},
 			async (input) => {
 				console.log('[readingdeck] create-book-tool:start', {
@@ -792,6 +797,11 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					},
 					'openai/toolInvocation/invoking': 'Saving your card...',
 					'openai/toolInvocation/invoked': 'Card saved',
+				},
+				annotations: {
+					openWorldHint: true,
+					readOnlyHint: false,
+					destructiveHint: false,
 				},
 			},
 			async (input) => {
