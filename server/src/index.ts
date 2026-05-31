@@ -120,7 +120,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'get-cards-info',
 			{
-				description: 'Get my cards related to users question',
+				description:
+					'Use when the user asks for cards related to a question, topic, emotion, or idea across their ReadingDeck library.',
 				inputSchema: {
 					input: z.string().optional(),
 				},
@@ -230,7 +231,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'get-recent-cards',
 			{
-				description: 'Get my most recently created cards.',
+				description:
+					'Use when the user wants to review their most recently created cards, regardless of book.',
 				inputSchema: {
 					limit: z.number().int().min(1).max(20).optional(),
 				},
@@ -341,7 +343,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'get-read-books',
 			{
-				description: 'Get books in my ReadingDeck library.',
+				description:
+					'Use when the user wants to see books already saved in their ReadingDeck library, or when they need to choose a target book before saving a card.',
 				inputSchema: {
 					limit: z.number().int().min(1).max(20).optional(),
 				},
@@ -449,7 +452,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'search-books',
 			{
-				description: 'Search books to add into my ReadingDeck library.',
+				description:
+					'Use when the user mentions a book title, author, or topic and wants to find a real book before adding it to ReadingDeck.',
 				inputSchema: {
 					query: z.string().min(1),
 					limit: z.number().int().min(1).max(20).optional(),
@@ -557,7 +561,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'get-cards-by-book',
 			{
-				description: 'Get cards I created for a specific book.',
+				description:
+					'Use when the user wants to review cards that belong to a specific book already saved in ReadingDeck.',
 				inputSchema: {
 					bookId: z.number().int().min(1),
 					limit: z.number().int().min(1).max(20).optional(),
@@ -670,7 +675,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'create-book',
 			{
-				description: 'Create a new book in my ReadingDeck library.',
+				description:
+					'Use only after the target book has been clearly identified from search results or explicit user input. Creates a book in ReadingDeck so cards can be saved under it.',
 				inputSchema: {
 					title: z.string().min(1),
 					author: z.string().min(1),
@@ -769,7 +775,8 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 			server,
 			'create-card',
 			{
-				description: 'Create a new card for a specific ReadingDeck book.',
+				description:
+					'Use only when the destination book is already identified. ReadingDeck cards must belong to a specific book.',
 				inputSchema: {
 					bookId: z.number().int().min(1),
 					type: z.enum(['insight', 'change', 'action', 'question']),
