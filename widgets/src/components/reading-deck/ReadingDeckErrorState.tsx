@@ -6,7 +6,7 @@ type ReadingDeckErrorStateProps = {
 };
 
 export function ReadingDeckErrorState({
-  message = "카드를 불러오는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+  message = "ReadingDeck에서 요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 }: ReadingDeckErrorStateProps) {
   return (
     <section className="empty-panel">

@@ -9,6 +9,14 @@ export function ReadingDeckSearchResultList({
 }: ReadingDeckSearchResultListProps) {
   return (
     <section className="cards-section">
+      <div className="list-intro">
+        <p className="list-kicker">BOOK SEARCH</p>
+        <h2 className="list-title">추가할 책 후보</h2>
+        <p className="list-description">
+          마음에 드는 책을 고른 뒤 ReadingDeck에 추가해 보세요.
+        </p>
+      </div>
+
       {books.map((book, index) => (
         <article
           className="card-entry"
@@ -42,6 +50,9 @@ export function ReadingDeckSearchResultList({
                   <div className="book-list-stats">
                     {book.publisher ? (
                       <span className="book-stat-chip">{book.publisher}</span>
+                    ) : null}
+                    {book.isbn ? (
+                      <span className="book-stat-chip">검색 결과</span>
                     ) : null}
                   </div>
                 </div>

@@ -9,10 +9,10 @@ export function ReadingDeckEmptyState() {
           <BookOpen />
         </EmptyMessage.Icon>
         <EmptyMessage.Title>
-          관련 카드를 아직 찾지 못했습니다.
+          아직 표시할 기록이 없습니다.
         </EmptyMessage.Title>
         <EmptyMessage.Description>
-          질문을 더 구체적으로 바꾸거나 책 제목, 감정, 상황을 함께 넣어보세요.
+          책 제목을 먼저 찾아보거나, 질문을 더 구체적으로 적어보세요.
         </EmptyMessage.Description>
       </EmptyMessage>
     </section>

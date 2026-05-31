@@ -141,7 +141,7 @@ function App() {
         <div className="readingdeck-shell">
           <div className="readingdeck-loading">
             <LoadingIndicator size={24} />
-            <p>ReadingDeck에서 결과를 불러오는 중입니다.</p>
+            <p>ReadingDeck에서 기록을 준비하고 있습니다.</p>
           </div>
         </div>
       </main>
