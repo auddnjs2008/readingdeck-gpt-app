@@ -120,7 +120,7 @@ function App() {
 
       window.setTimeout(() => {
         window.clearInterval(pollingId);
-      }, 4000);
+      }, 15000);
     },
   });
 
@@ -141,7 +141,7 @@ function App() {
         <div className="readingdeck-shell">
           <div className="readingdeck-loading">
             <LoadingIndicator size={24} />
-            <p>ReadingDeck에서 카드를 불러오는 중입니다.</p>
+            <p>ReadingDeck에서 결과를 불러오는 중입니다.</p>
           </div>
         </div>
       </main>
