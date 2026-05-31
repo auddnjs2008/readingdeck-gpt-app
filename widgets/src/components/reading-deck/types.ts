@@ -23,9 +23,19 @@ export type BookItem = {
   status?: "reading" | "finished" | "paused";
 };
 
+export type SearchBookItem = {
+  title: string;
+  author: string;
+  publisher?: string;
+  isbn?: string;
+  thumbnail?: string | null;
+  contents?: string;
+};
+
 export type ToolOutput = {
   cards?: CardItem[];
   books?: BookItem[];
+  searchResults?: SearchBookItem[];
   queryLabel?: string;
   sourceLabel?: string;
   error?: {

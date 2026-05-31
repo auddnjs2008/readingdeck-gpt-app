@@ -2,10 +2,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import z from 'zod';
 import { createMcpHandler } from 'agents/mcp';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
+import { CreateBookError, createBook } from './service/createBook';
+import { CreateCardError, createCard } from './service/createCard';
 import { GetCardsByBookError, getCardsByBook } from './service/getCardsByBook';
 import { GetReadBooksError, getReadBooks } from './service/getReadBooks';
 import { GetRecentCardsError, getRecentCards } from './service/getRecentCards';
 import { SearchCardsError, searchCards } from './service/searchCards';
+import { SearchBooksError, searchBooks } from './service/searchBooks';
 import OAuthProvider, { OAuthError } from '@cloudflare/workers-oauth-provider';
 import handleAuthorizeGet from './lib/authorize';
 import handleAuthCallback from './lib/callback';
@@ -444,6 +447,114 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 
 		registerAppTool(
 			server,
+			'search-books',
+			{
+				description: 'Search books to add into my ReadingDeck library.',
+				inputSchema: {
+					query: z.string().min(1),
+					limit: z.number().int().min(1).max(20).optional(),
+				},
+				_meta: {
+					ui: {
+						resourceUri: WIDGET_URI,
+					},
+					'openai/toolInvocation/invoking': 'Searching books...',
+					'openai/toolInvocation/invoked': 'Search results ready',
+				},
+				annotations: {
+					openWorldHint: true,
+					readOnlyHint: true,
+				},
+			},
+			async ({ query, limit }) => {
+				console.log('[readingdeck] search-books-tool:start', {
+					query,
+					limit: limit ?? 10,
+					hasAccessToken: Boolean(readingdeckAccessToken),
+					baseUrl: this.env.READINGDECK_API_BASE_URL,
+				});
+
+				try {
+					const data = await searchBooks({
+						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						query,
+						limit: limit ?? 10,
+						accessToken: readingdeckAccessToken,
+					});
+
+					console.log('[readingdeck] search-books-tool:success', {
+						query,
+						count: data.items.length,
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: [
+									`Found ${data.items.length} books for "${query}".`,
+									...data.items.map(
+										(book, index) =>
+											`${index + 1}. ${book.title} - ${book.author}${book.publisher ? ` (${book.publisher})` : ''}`
+									),
+								].join('\n'),
+							},
+						],
+						structuredContent: {
+							searchResults: data.items,
+							queryLabel: query,
+							sourceLabel: 'Search results',
+						},
+					};
+				} catch (error) {
+					if (error instanceof SearchBooksError) {
+						console.error('[readingdeck] search-books-tool:searchBooksError', {
+							status: error.status,
+							message: error.message,
+							detail: error.detail,
+						});
+
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `책 검색에 실패했습니다. (${error.status})`,
+								},
+							],
+							structuredContent: {
+								searchResults: [],
+								queryLabel: query,
+								sourceLabel: 'Search results',
+								error: {
+									type: 'search_books_error',
+									status: error.status,
+								},
+							},
+						};
+					}
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: '책 검색 중 예상치 못한 오류가 발생했습니다.',
+							},
+						],
+						structuredContent: {
+							searchResults: [],
+							queryLabel: query,
+							sourceLabel: 'Search results',
+							error: {
+								type: 'unexpected_error',
+							},
+						},
+					};
+				}
+			},
+		);
+
+		registerAppTool(
+			server,
 			'get-cards-by-book',
 			{
 				description: 'Get cards I created for a specific book.',
@@ -541,6 +652,194 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 							{
 								type: 'text',
 								text: 'ReadingDeck book cards tool failed unexpectedly.',
+							},
+						],
+						structuredContent: {
+							cards: [],
+							sourceLabel: 'Live tool output',
+							error: {
+								type: 'unexpected_error',
+							},
+						},
+					};
+				}
+			},
+		);
+
+		registerAppTool(
+			server,
+			'create-book',
+			{
+				description: 'Create a new book in my ReadingDeck library.',
+				inputSchema: {
+					title: z.string().min(1),
+					author: z.string().min(1),
+					publisher: z.string().min(1),
+					contents: z.string().optional(),
+					imageUrl: z.string().url().optional(),
+					status: z.enum(['reading', 'finished', 'paused']).optional(),
+					currentPage: z.number().int().min(0).optional(),
+					totalPages: z.number().int().min(1).optional(),
+					startedAt: z.string().datetime().optional(),
+					finishedAt: z.string().datetime().optional(),
+				},
+				_meta: {
+					ui: {
+						resourceUri: WIDGET_URI,
+					},
+					'openai/toolInvocation/invoking': 'Creating your book...',
+					'openai/toolInvocation/invoked': 'Book created',
+				},
+			},
+			async (input) => {
+				console.log('[readingdeck] create-book-tool:start', {
+					title: input.title,
+					hasAccessToken: Boolean(readingdeckAccessToken),
+				});
+
+				try {
+					const book = await createBook({
+						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						accessToken: readingdeckAccessToken,
+						body: input,
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: `"${book.title}" 책을 ReadingDeck에 추가했어요.`,
+							},
+						],
+						structuredContent: {
+							books: [
+								{
+									bookId: book.id,
+									title: book.title,
+									author: book.author,
+									backgroundImage: book.backgroundImage ?? null,
+									progressPercent: book.progressPercent,
+									status: book.status,
+								},
+							],
+							queryLabel: 'Created book',
+							sourceLabel: 'Live tool output',
+						},
+					};
+				} catch (error) {
+					if (error instanceof CreateBookError) {
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `책 생성에 실패했습니다. (${error.status})`,
+								},
+							],
+							structuredContent: {
+								books: [],
+								sourceLabel: 'Live tool output',
+								error: {
+									type: 'create_book_error',
+									status: error.status,
+								},
+							},
+						};
+					}
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: '책 생성 중 예상치 못한 오류가 발생했습니다.',
+							},
+						],
+						structuredContent: {
+							books: [],
+							sourceLabel: 'Live tool output',
+							error: {
+								type: 'unexpected_error',
+							},
+						},
+					};
+				}
+			},
+		);
+
+		registerAppTool(
+			server,
+			'create-card',
+			{
+				description: 'Create a new card for a specific ReadingDeck book.',
+				inputSchema: {
+					bookId: z.number().int().min(1),
+					type: z.enum(['insight', 'change', 'action', 'question']),
+					thought: z.string().min(3),
+					title: z.string().optional(),
+					quote: z.string().optional(),
+					pageStart: z.number().int().min(1).optional(),
+					pageEnd: z.number().int().min(1).optional(),
+				},
+				_meta: {
+					ui: {
+						resourceUri: WIDGET_URI,
+					},
+					'openai/toolInvocation/invoking': 'Saving your card...',
+					'openai/toolInvocation/invoked': 'Card saved',
+				},
+			},
+			async (input) => {
+				console.log('[readingdeck] create-card-tool:start', {
+					bookId: input.bookId,
+					type: input.type,
+					hasAccessToken: Boolean(readingdeckAccessToken),
+				});
+
+				try {
+					const card = await createCard({
+						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						bookId: input.bookId,
+						accessToken: readingdeckAccessToken,
+						body: input,
+					});
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: `"${card.bookTitle}"에 새 카드를 저장했어요.`,
+							},
+						],
+						structuredContent: {
+							cards: [card],
+							queryLabel: card.bookTitle,
+							sourceLabel: 'Live tool output',
+						},
+					};
+				} catch (error) {
+					if (error instanceof CreateCardError) {
+						return {
+							content: [
+								{
+									type: 'text',
+									text: `카드 저장에 실패했습니다. (${error.status})`,
+								},
+							],
+							structuredContent: {
+								cards: [],
+								sourceLabel: 'Live tool output',
+								error: {
+									type: 'create_card_error',
+									status: error.status,
+								},
+							},
+						};
+					}
+
+					return {
+						content: [
+							{
+								type: 'text',
+								text: '카드 저장 중 예상치 못한 오류가 발생했습니다.',
 							},
 						],
 						structuredContent: {

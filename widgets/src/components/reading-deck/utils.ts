@@ -1,4 +1,10 @@
-import type { BookItem, CardItem, CardType, ToolOutput } from "./types";
+import type {
+  BookItem,
+  CardItem,
+  CardType,
+  SearchBookItem,
+  ToolOutput,
+} from "./types";
 
 export const cardTypeMeta: Record<
   CardType,
@@ -66,6 +72,25 @@ export function isBookItem(value: unknown): value is BookItem {
   );
 }
 
+export function isSearchBookItem(value: unknown): value is SearchBookItem {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const book = value as Partial<SearchBookItem>;
+
+  return (
+    typeof book.title === "string" &&
+    typeof book.author === "string" &&
+    (typeof book.publisher === "string" || book.publisher === undefined) &&
+    (typeof book.isbn === "string" || book.isbn === undefined) &&
+    (typeof book.thumbnail === "string" ||
+      book.thumbnail === null ||
+      book.thumbnail === undefined) &&
+    (typeof book.contents === "string" || book.contents === undefined)
+  );
+}
+
 export function isToolOutput(value: unknown): value is ToolOutput {
   if (!value || typeof value !== "object") {
     return false;
@@ -84,6 +109,9 @@ export function isToolOutput(value: unknown): value is ToolOutput {
     (candidate.cards === undefined || candidate.cards.every(isCardItem)) &&
     (candidate.books === undefined ||
       (Array.isArray(candidate.books) && candidate.books.every(isBookItem))) &&
+    (candidate.searchResults === undefined ||
+      (Array.isArray(candidate.searchResults) &&
+        candidate.searchResults.every(isSearchBookItem))) &&
     (typeof candidate.queryLabel === "string" || candidate.queryLabel === undefined) &&
     (typeof candidate.sourceLabel === "string" || candidate.sourceLabel === undefined) &&
     (candidate.error === undefined ||

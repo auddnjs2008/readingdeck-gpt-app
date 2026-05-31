@@ -5,8 +5,13 @@ import {
   ReadingDeckCardList,
   ReadingDeckEmptyState,
   ReadingDeckErrorState,
+  ReadingDeckSearchResultList,
 } from "./components/reading-deck";
-import type { BookItem, CardItem } from "./components/reading-deck/types";
+import type {
+  BookItem,
+  CardItem,
+  SearchBookItem,
+} from "./components/reading-deck/types";
 import { isToolOutput } from "./components/reading-deck/utils";
 import {
   applyDocumentTheme,
@@ -15,12 +20,19 @@ import {
 } from "@modelcontextprotocol/ext-apps/react";
 import { LoadingIndicator } from "@openai/apps-sdk-ui/components/Indicator";
 
-type View = "loading" | "cards" | "books" | "empty" | "error";
+type View =
+  | "loading"
+  | "cards"
+  | "books"
+  | "search-results"
+  | "empty"
+  | "error";
 
 function App() {
   const [view, setView] = useState<View>("loading");
   const [cards, setCards] = useState<CardItem[]>([]);
   const [books, setBooks] = useState<BookItem[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchBookItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleToolResult = useCallback(
@@ -29,6 +41,7 @@ function App() {
         if (structuredContent.error) {
           setCards([]);
           setBooks([]);
+          setSearchResults([]);
           setErrorMessage(
             structuredContent.error.status
               ? `요청을 처리하지 못했습니다. (status: ${structuredContent.error.status})`
@@ -38,9 +51,23 @@ function App() {
           return;
         }
 
+        if (Array.isArray(structuredContent.searchResults)) {
+          setSearchResults(structuredContent.searchResults);
+          setCards([]);
+          setBooks([]);
+          setErrorMessage(null);
+          setView(
+            structuredContent.searchResults.length > 0
+              ? "search-results"
+              : "empty",
+          );
+          return;
+        }
+
         if (Array.isArray(structuredContent.books)) {
           setBooks(structuredContent.books);
           setCards([]);
+          setSearchResults([]);
           setErrorMessage(null);
           setView(structuredContent.books.length > 0 ? "books" : "empty");
           return;
@@ -49,6 +76,7 @@ function App() {
         if (Array.isArray(structuredContent.cards)) {
           setCards(structuredContent.cards);
           setBooks([]);
+          setSearchResults([]);
           setErrorMessage(null);
           setView(structuredContent.cards.length > 0 ? "cards" : "empty");
           return;
@@ -135,6 +163,8 @@ function App() {
       <div className="readingdeck-shell">
         {view === "books" ? (
           <ReadingDeckBookList books={books} />
+        ) : view === "search-results" ? (
+          <ReadingDeckSearchResultList books={searchResults} />
         ) : view === "cards" ? (
           <ReadingDeckCardList cards={cards} />
         ) : (
