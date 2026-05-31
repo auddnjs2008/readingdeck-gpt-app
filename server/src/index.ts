@@ -795,11 +795,13 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 				});
 
 				try {
+					const { bookId, ...cardBody } = input;
+
 					const card = await createCard({
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
-						bookId: input.bookId,
+						bookId,
 						accessToken: readingdeckAccessToken,
-						body: input,
+						body: cardBody,
 					});
 
 					return {
