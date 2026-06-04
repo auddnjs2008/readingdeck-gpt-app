@@ -1,9 +1,11 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const GET_READ_BOOKS_ENDPOINT = '/books';
 
 export type GetReadBooksRequest = {
 	baseUrl: string;
 	limit?: number;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	signal?: AbortSignal;
 };
 
@@ -53,46 +55,22 @@ export class GetReadBooksError extends Error {
 export async function getReadBooks({
 	baseUrl,
 	limit = 10,
-	accessToken,
+	auth,
 	signal,
 }: GetReadBooksRequest): Promise<GetReadBooksResponse> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
-
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
-
-	const headers = new Headers();
-
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	const response = await fetch(
-		`${trimmedBaseUrl}${GET_READ_BOOKS_ENDPOINT}?page=1&take=${encodeURIComponent(String(limit))}&sort=updatedAt`,
-		{
-			method: 'GET',
-			headers,
-			signal,
-		},
-	);
-
-	if (!response.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
-		}
-
-		throw new GetReadBooksError('Failed to fetch books.', response.status, detail);
-	}
-
-	const result = (await response.json()) as BooksApiResponse;
+	const { data } = await requestReadingDeck<BooksApiResponse, GetReadBooksError>({
+		baseUrl,
+		path: `${GET_READ_BOOKS_ENDPOINT}?page=1&take=${encodeURIComponent(String(limit))}&sort=updatedAt`,
+		method: 'GET',
+		auth,
+		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new GetReadBooksError(errorMessage, status, detail),
+		errorMessage: 'Failed to fetch books.',
+	});
 
 	return {
-		items: result.items.map((book) => ({
+		items: data.items.map((book) => ({
 			bookId: book.id,
 			title: book.title,
 			author: book.author,
@@ -101,6 +79,6 @@ export async function getReadBooks({
 			backgroundImage: book.backgroundImage ?? null,
 			status: book.status,
 		})),
-		meta: result.meta,
+		meta: data.meta,
 	};
 }

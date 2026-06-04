@@ -1,10 +1,12 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const SEARCH_CARDS_ENDPOINT = '/card-embeddings/search/cards';
 
 export type SearchCardsRequest = {
 	baseUrl: string;
 	message: string;
 	limit?: number;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	cookie?: string;
 	signal?: AbortSignal;
 };
@@ -34,54 +36,37 @@ export async function searchCards({
 	baseUrl,
 	message,
 	limit = 5,
-	accessToken,
+	auth,
 	cookie,
 	signal,
 }: SearchCardsRequest): Promise<SearchCardsResponse> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
 	const trimmedMessage = message.trim();
-
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
 
 	if (!trimmedMessage) {
 		throw new Error('message is required.');
 	}
 
-	const headers = new Headers({
-		'Content-Type': 'application/json',
-	});
+	const headers = cookie
+		? {
+			Cookie: cookie,
+		}
+		: undefined;
 
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	if (cookie) {
-		headers.set('Cookie', cookie);
-	}
-
-	const response = await fetch(`${trimmedBaseUrl}${SEARCH_CARDS_ENDPOINT}`, {
+	const { data } = await requestReadingDeck<SearchCardsResponse, SearchCardsError>({
+		baseUrl,
+		path: SEARCH_CARDS_ENDPOINT,
 		method: 'POST',
-		headers,
-		body: JSON.stringify({
+		body: {
 			message: trimmedMessage,
 			limit,
-		}),
+		},
+		auth,
 		signal,
+		headers,
+		errorFactory: (errorMessage, status, detail) =>
+			new SearchCardsError(errorMessage, status, detail),
+		errorMessage: 'Failed to search cards.',
 	});
 
-	if (!response.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
-		}
-
-		throw new SearchCardsError('Failed to search cards.', response.status, detail);
-	}
-
-	return (await response.json()) as SearchCardsResponse;
+	return data;
 }

@@ -1,10 +1,12 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const SEARCH_BOOKS_ENDPOINT = '/books/search';
 
 export type SearchBooksRequest = {
 	baseUrl: string;
 	query: string;
 	limit?: number;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	signal?: AbortSignal;
 };
 
@@ -51,51 +53,28 @@ export async function searchBooks({
 	baseUrl,
 	query,
 	limit = 10,
-	accessToken,
+	auth,
 	signal,
 }: SearchBooksRequest): Promise<SearchBooksResponse> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
 	const trimmedQuery = query.trim();
-
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
 
 	if (!trimmedQuery) {
 		throw new Error('query is required.');
 	}
 
-	const headers = new Headers();
-
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	const response = await fetch(
-		`${trimmedBaseUrl}${SEARCH_BOOKS_ENDPOINT}?query=${encodeURIComponent(trimmedQuery)}&size=${encodeURIComponent(String(limit))}`,
-		{
-			method: 'GET',
-			headers,
-			signal,
-		},
-	);
-
-	if (!response.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
-		}
-
-		throw new SearchBooksError('Failed to search books.', response.status, detail);
-	}
-
-	const result = (await response.json()) as KakaoBookSearchResponse;
+	const { data } = await requestReadingDeck<KakaoBookSearchResponse, SearchBooksError>({
+		baseUrl,
+		path: `${SEARCH_BOOKS_ENDPOINT}?query=${encodeURIComponent(trimmedQuery)}&size=${encodeURIComponent(String(limit))}`,
+		method: 'GET',
+		auth,
+		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new SearchBooksError(errorMessage, status, detail),
+		errorMessage: 'Failed to search books.',
+	});
 
 	return {
-		items: result.documents.map((book) => ({
+		items: data.documents.map((book) => ({
 			title: book.title,
 			author: book.authors?.join(', ') || '저자 미상',
 			publisher: book.publisher,
@@ -103,12 +82,12 @@ export async function searchBooks({
 			thumbnail: book.thumbnail || null,
 			contents: book.contents,
 		})),
-		meta: result.meta
+		meta: data.meta
 			? {
-					isEnd: result.meta.is_end,
-					pageableCount: result.meta.pageable_count,
-					totalCount: result.meta.total_count,
-				}
+				isEnd: data.meta.is_end,
+				pageableCount: data.meta.pageable_count,
+				totalCount: data.meta.total_count,
+			}
 			: undefined,
 	};
 }

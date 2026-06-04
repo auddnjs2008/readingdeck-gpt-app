@@ -1,9 +1,11 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const GET_RECENT_CARDS_ENDPOINT = '/cards/recent';
 
 export type GetRecentCardsRequest = {
 	baseUrl: string;
 	limit?: number;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	signal?: AbortSignal;
 };
 
@@ -32,41 +34,19 @@ export class GetRecentCardsError extends Error {
 export async function getRecentCards({
 	baseUrl,
 	limit = 10,
-	accessToken,
+	auth,
 	signal,
 }: GetRecentCardsRequest): Promise<GetRecentCardsResponse> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
+	const { data } = await requestReadingDeck<GetRecentCardsResponse, GetRecentCardsError>({
+		baseUrl,
+		path: `${GET_RECENT_CARDS_ENDPOINT}?limit=${encodeURIComponent(String(limit))}`,
+		method: 'GET',
+		auth,
+		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new GetRecentCardsError(errorMessage, status, detail),
+		errorMessage: 'Failed to fetch recent cards.',
+	});
 
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
-
-	const headers = new Headers();
-
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	const response = await fetch(
-		`${trimmedBaseUrl}${GET_RECENT_CARDS_ENDPOINT}?limit=${encodeURIComponent(String(limit))}`,
-		{
-			method: 'GET',
-			headers,
-			signal,
-		},
-	);
-
-	if (!response.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
-		}
-
-		throw new GetRecentCardsError('Failed to fetch recent cards.', response.status, detail);
-	}
-
-	return (await response.json()) as GetRecentCardsResponse;
+	return data;
 }

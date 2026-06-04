@@ -1,8 +1,10 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const CREATE_BOOK_ENDPOINT = '/books';
 
 export type CreateBookRequest = {
 	baseUrl: string;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	signal?: AbortSignal;
 	body: {
 		title: string;
@@ -36,42 +38,21 @@ export class CreateBookError extends Error {
 
 export async function createBook({
 	baseUrl,
-	accessToken,
+	auth,
 	signal,
 	body,
 }: CreateBookRequest): Promise<CreateBookResponse> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
-
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
-
-	const headers = new Headers({
-		'content-type': 'application/json',
-	});
-
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	const response = await fetch(`${trimmedBaseUrl}${CREATE_BOOK_ENDPOINT}`, {
+	const { data } = await requestReadingDeck<CreateBookResponse, CreateBookError>({
+		baseUrl,
+		path: CREATE_BOOK_ENDPOINT,
 		method: 'POST',
-		headers,
-		body: JSON.stringify(body),
+		body,
+		auth,
 		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new CreateBookError(errorMessage, status, detail),
+		errorMessage: 'Failed to create book.',
 	});
 
-	if (!response.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
-		}
-
-		throw new CreateBookError('Failed to create book.', response.status, detail);
-	}
-
-	return (await response.json()) as CreateBookResponse;
+	return data;
 }

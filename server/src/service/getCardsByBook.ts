@@ -1,10 +1,12 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const GET_CARDS_BY_BOOK_ENDPOINT = '/cards/by-book';
 
 export type GetCardsByBookRequest = {
 	baseUrl: string;
 	bookId: number;
 	limit?: number;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	signal?: AbortSignal;
 };
 
@@ -39,41 +41,19 @@ export async function getCardsByBook({
 	baseUrl,
 	bookId,
 	limit = 10,
-	accessToken,
+	auth,
 	signal,
 }: GetCardsByBookRequest): Promise<GetCardsByBookResponse> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
+	const { data } = await requestReadingDeck<GetCardsByBookResponse, GetCardsByBookError>({
+		baseUrl,
+		path: `${GET_CARDS_BY_BOOK_ENDPOINT}/${bookId}?take=${encodeURIComponent(String(limit))}`,
+		method: 'GET',
+		auth,
+		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new GetCardsByBookError(errorMessage, status, detail),
+		errorMessage: 'Failed to fetch cards by book.',
+	});
 
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
-
-	const headers = new Headers();
-
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	const response = await fetch(
-		`${trimmedBaseUrl}${GET_CARDS_BY_BOOK_ENDPOINT}/${bookId}?take=${encodeURIComponent(String(limit))}`,
-		{
-			method: 'GET',
-			headers,
-			signal,
-		},
-	);
-
-	if (!response.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await response.json();
-		} catch {
-			detail = await response.text();
-		}
-
-		throw new GetCardsByBookError('Failed to fetch cards by book.', response.status, detail);
-	}
-
-	return (await response.json()) as GetCardsByBookResponse;
+	return data;
 }

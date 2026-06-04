@@ -1,10 +1,12 @@
+import { ReadingDeckAuth, requestReadingDeck } from './requestReadingDeck';
+
 export const CREATE_CARD_ENDPOINT = '/books';
 export const GET_CARD_DETAIL_ENDPOINT = '/cards';
 
 export type CreateCardRequest = {
 	baseUrl: string;
 	bookId: number;
-	accessToken?: string;
+	auth?: ReadingDeckAuth;
 	signal?: AbortSignal;
 	body: {
 		type: 'insight' | 'change' | 'action' | 'question';
@@ -56,71 +58,37 @@ export class CreateCardError extends Error {
 	}
 }
 
-function buildHeaders(accessToken?: string) {
-	const headers = new Headers({
-		'content-type': 'application/json',
-	});
-
-	if (accessToken) {
-		headers.set('Authorization', `Bearer ${accessToken}`);
-	}
-
-	return headers;
-}
-
 export async function createCard({
 	baseUrl,
 	bookId,
-	accessToken,
+	auth,
 	signal,
 	body,
 }: CreateCardRequest): Promise<CreateCardResult> {
-	const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
-
-	if (!trimmedBaseUrl) {
-		throw new Error('baseUrl is required.');
-	}
-
-	const createResponse = await fetch(`${trimmedBaseUrl}${CREATE_CARD_ENDPOINT}/${bookId}/cards`, {
+	const createdResult = await requestReadingDeck<CreatedCardResponse, CreateCardError>({
+		baseUrl,
+		path: `${CREATE_CARD_ENDPOINT}/${bookId}/cards`,
 		method: 'POST',
-		headers: buildHeaders(accessToken),
-		body: JSON.stringify(body),
+		body,
+		auth,
 		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new CreateCardError(errorMessage, status, detail),
+		errorMessage: 'Failed to create card.',
 	});
 
-	if (!createResponse.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await createResponse.json();
-		} catch {
-			detail = await createResponse.text();
-		}
-
-		throw new CreateCardError('Failed to create card.', createResponse.status, detail);
-	}
-
-	const created = (await createResponse.json()) as CreatedCardResponse;
-
-	const detailResponse = await fetch(`${trimmedBaseUrl}${GET_CARD_DETAIL_ENDPOINT}/${created.id}`, {
+	const detailResult = await requestReadingDeck<CardDetailResponse, CreateCardError>({
+		baseUrl,
+		path: `${GET_CARD_DETAIL_ENDPOINT}/${createdResult.data.id}`,
 		method: 'GET',
-		headers: buildHeaders(accessToken),
+		auth: createdResult.auth,
 		signal,
+		errorFactory: (errorMessage, status, detail) =>
+			new CreateCardError(errorMessage, status, detail),
+		errorMessage: 'Failed to fetch created card detail.',
 	});
 
-	if (!detailResponse.ok) {
-		let detail: unknown = null;
-
-		try {
-			detail = await detailResponse.json();
-		} catch {
-			detail = await detailResponse.text();
-		}
-
-		throw new CreateCardError('Failed to fetch created card detail.', detailResponse.status, detail);
-	}
-
-	const card = (await detailResponse.json()) as CardDetailResponse;
+	const card = detailResult.data;
 
 	return {
 		cardId: card.id,

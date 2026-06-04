@@ -66,6 +66,7 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 
 		const authProps = (this.ctx.props ?? {}) as ReadingDeckAuthProps;
 		const readingdeckAccessToken = authProps.readingdeckAccessToken;
+		const readingdeckRefreshToken = authProps.readingdeckRefreshToken;
 		const widgetResourceDomains = [
 			publicBaseUrl,
 			'https://readingdeck.s3.ap-northeast-2.amazonaws.com',
@@ -148,7 +149,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					const data = await searchCards({
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
 						message: input ?? '',
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 					});
 
 					console.log('[readingdeck] tool:success', {
@@ -259,7 +263,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					const data = await getRecentCards({
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
 						limit: limit ?? 10,
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 					});
 
 					console.log('[readingdeck] recent-tool:success', {
@@ -371,7 +378,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					const data = await getReadBooks({
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
 						limit: limit ?? 10,
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 					});
 
 					console.log('[readingdeck] books-tool:success', {
@@ -483,7 +493,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
 						query,
 						limit: limit ?? 10,
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 					});
 
 					console.log('[readingdeck] search-books-tool:success', {
@@ -592,7 +605,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
 						bookId,
 						limit: limit ?? 10,
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 					});
 
 					console.log('[readingdeck] cards-by-book-tool:success', {
@@ -711,7 +727,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 				try {
 					const book = await createBook({
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 						body: input,
 					});
 
@@ -817,7 +836,10 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 					const card = await createCard({
 						baseUrl: this.env.READINGDECK_API_BASE_URL,
 						bookId,
+						auth: {
 						accessToken: readingdeckAccessToken,
+						refreshToken: readingdeckRefreshToken,
+					},
 						body: cardBody,
 					});
 
@@ -965,7 +987,7 @@ const oauthProvider = new OAuthProvider({
 					readingdeckProvider: result.user.provider,
 					readingdeckAccessTokenExpiresIn: result.expiresIn,
 				},
-				accessTokenTTL: result.expiresIn,
+				accessTokenTTL: Math.max(60, result.expiresIn - 60),
 			};
 		}
 
@@ -1012,7 +1034,7 @@ const oauthProvider = new OAuthProvider({
 					readingdeckRefreshToken: result.refreshToken,
 					readingdeckAccessTokenExpiresIn: result.expiresIn,
 				},
-				accessTokenTTL: result.expiresIn,
+				accessTokenTTL: Math.max(60, result.expiresIn - 60),
 			};
 		}
 
