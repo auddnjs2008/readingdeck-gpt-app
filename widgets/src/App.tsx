@@ -5,6 +5,7 @@ import {
   ReadingDeckCardList,
   ReadingDeckEmptyState,
   ReadingDeckErrorState,
+  ReadingDeckReauthState,
   ReadingDeckSearchResultList,
 } from "./components/reading-deck";
 import type {
@@ -26,7 +27,8 @@ type View =
   | "books"
   | "search-results"
   | "empty"
-  | "error";
+  | "error"
+  | "reauth-required";
 
 function App() {
   const [view, setView] = useState<View>("loading");
@@ -42,6 +44,13 @@ function App() {
           setCards([]);
           setBooks([]);
           setSearchResults([]);
+
+          if (structuredContent.error.type === "reauth_required") {
+            setErrorMessage(null);
+            setView("reauth-required");
+            return;
+          }
+
           setErrorMessage(
             structuredContent.error.status
               ? `요청을 처리하지 못했습니다. (status: ${structuredContent.error.status})`
@@ -153,6 +162,16 @@ function App() {
       <main className="readingdeck-app">
         <div className="readingdeck-shell">
           <ReadingDeckErrorState message={errorMessage ?? undefined} />
+        </div>
+      </main>
+    );
+  }
+
+  if (view === "reauth-required") {
+    return (
+      <main className="readingdeck-app">
+        <div className="readingdeck-shell">
+          <ReadingDeckReauthState />
         </div>
       </main>
     );

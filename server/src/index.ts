@@ -9,6 +9,7 @@ import { GetReadBooksError, getReadBooks } from './service/getReadBooks';
 import { GetRecentCardsError, getRecentCards } from './service/getRecentCards';
 import { SearchCardsError, searchCards } from './service/searchCards';
 import { SearchBooksError, searchBooks } from './service/searchBooks';
+import { ReadingDeckReauthRequiredError } from './service/requestReadingDeck';
 import OAuthProvider, { OAuthError } from '@cloudflare/workers-oauth-provider';
 import handleAuthorizeGet from './lib/authorize';
 import handleAuthCallback from './lib/callback';
@@ -31,6 +32,25 @@ function getOAuthMetadata(baseUrl: string) {
 		grant_types_supported: ['authorization_code', 'refresh_token'],
 		token_endpoint_auth_methods_supported: ['none'],
 		code_challenge_methods_supported: ['S256'],
+	};
+}
+
+function createReauthRequiredToolResult(structuredContent: Record<string, unknown>) {
+	return {
+		content: [
+			{
+				type: 'text' as const,
+				text: 'ReadingDeck 연결이 만료되었습니다. ChatGPT 앱 설정에서 ReadingDeck을 다시 인증해 주세요.',
+			},
+		],
+		structuredContent: {
+			...structuredContent,
+			error: {
+				type: 'reauth_required',
+				status: 401,
+				message: 'ReadingDeck authorization has expired.',
+			},
+		},
 	};
 }
 
@@ -181,6 +201,14 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							cards: [],
+							queryLabel: input?.trim() || 'Current question',
+							sourceLabel: 'Live tool output',
+						});
+					}
+
 					if (error instanceof SearchCardsError) {
 						console.error('[readingdeck] tool:searchCardsError', {
 							status: error.status,
@@ -296,6 +324,14 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							cards: [],
+							queryLabel: 'Recent cards',
+							sourceLabel: 'Live tool output',
+						});
+					}
+
 					if (error instanceof GetRecentCardsError) {
 						console.error('[readingdeck] recent-tool:getRecentCardsError', {
 							status: error.status,
@@ -408,6 +444,14 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							books: [],
+							queryLabel: 'My books',
+							sourceLabel: 'Live tool output',
+						});
+					}
+
 					if (error instanceof GetReadBooksError) {
 						console.error('[readingdeck] books-tool:getReadBooksError', {
 							status: error.status,
@@ -524,6 +568,14 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							searchResults: [],
+							queryLabel: query,
+							sourceLabel: 'Search results',
+						});
+					}
+
 					if (error instanceof SearchBooksError) {
 						console.error('[readingdeck] search-books-tool:searchBooksError', {
 							status: error.status,
@@ -639,6 +691,13 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							cards: [],
+							sourceLabel: 'Live tool output',
+						});
+					}
+
 					if (error instanceof GetCardsByBookError) {
 						console.error('[readingdeck] cards-by-book-tool:getCardsByBookError', {
 							status: error.status,
@@ -757,6 +816,13 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							books: [],
+							sourceLabel: 'Live tool output',
+						});
+					}
+
 					if (error instanceof CreateBookError) {
 						return {
 							content: [
@@ -857,6 +923,13 @@ class PrivateHandler extends WorkerEntrypoint<Env> {
 						},
 					};
 				} catch (error) {
+					if (error instanceof ReadingDeckReauthRequiredError) {
+						return createReauthRequiredToolResult({
+							cards: [],
+							sourceLabel: 'Live tool output',
+						});
+					}
+
 					if (error instanceof CreateCardError) {
 						return {
 							content: [

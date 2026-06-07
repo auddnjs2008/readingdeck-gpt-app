@@ -27,6 +27,15 @@ export type RequestReadingDeckResult<T> = {
 	refreshed: boolean;
 };
 
+export class ReadingDeckReauthRequiredError extends Error {
+	readonly status = 401;
+
+	constructor(message = 'ReadingDeck authorization has expired.', public readonly detail?: unknown) {
+		super(message);
+		this.name = 'ReadingDeckReauthRequiredError';
+	}
+}
+
 function trimBaseUrl(baseUrl: string) {
 	return baseUrl.trim().replace(/\/+$/, '');
 }
@@ -105,20 +114,38 @@ export async function requestReadingDeck<T, E extends Error>({
 	let response = await makeRequest(currentAuth.accessToken);
 	let refreshed = false;
 
-	if (response.status === 401 && currentAuth.refreshToken) {
+	if (response.status === 401) {
+		if (!currentAuth.refreshToken) {
+			const detail = await parseFailureDetail(response);
+			throw new ReadingDeckReauthRequiredError(
+				'ReadingDeck refresh token is missing.',
+				detail
+			);
+		}
+
 		const refreshedTokens = await refreshReadingDeckToken(
 			normalizedBaseUrl,
 			currentAuth.refreshToken,
 			signal
 		);
 
-		if (refreshedTokens) {
-			currentAuth = {
-				accessToken: refreshedTokens.accessToken,
-				refreshToken: refreshedTokens.refreshToken,
-			};
-			refreshed = true;
-			response = await makeRequest(currentAuth.accessToken);
+		if (!refreshedTokens) {
+			throw new ReadingDeckReauthRequiredError('ReadingDeck token refresh failed.');
+		}
+
+		currentAuth = {
+			accessToken: refreshedTokens.accessToken,
+			refreshToken: refreshedTokens.refreshToken,
+		};
+		refreshed = true;
+		response = await makeRequest(currentAuth.accessToken);
+
+		if (response.status === 401) {
+			const detail = await parseFailureDetail(response);
+			throw new ReadingDeckReauthRequiredError(
+				'ReadingDeck authorization is still invalid after refresh.',
+				detail
+			);
 		}
 	}
 

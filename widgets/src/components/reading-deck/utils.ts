@@ -119,7 +119,9 @@ export function isToolOutput(value: unknown): value is ToolOutput {
         candidate.error !== null &&
         typeof candidate.error.type === "string" &&
         (typeof candidate.error.status === "number" ||
-          candidate.error.status === undefined)))
+          candidate.error.status === undefined) &&
+        (typeof candidate.error.message === "string" ||
+          candidate.error.message === undefined)))
   );
 }
 

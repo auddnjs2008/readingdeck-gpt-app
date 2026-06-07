@@ -41,6 +41,7 @@ export type ToolOutput = {
   error?: {
     type: string;
     status?: number;
+    message?: string;
   };
 };
 
